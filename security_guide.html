@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دليل الحماية من البرمجيات الخبيثة | مركز التحكم</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <!-- Application Configuration & Styles -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'cyber-bg': '#f8fafc', // slate-50
+                        'cyber-text': '#1e293b', // slate-800
+                        'cyber-primary': '#2563eb', // blue-600
+                        'cyber-secondary': '#475569', // slate-600
+                        'cyber-accent': '#0ea5e9', // sky-500
+                        'alert-red': '#ef4444',
+                        'safe-green': '#10b981',
+                        'warning-orange': '#f59e0b'
+                    },
+                    fontFamily: {
+                        sans: ['Tajawal', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        
+        /* Chart Container Styling - MANDATORY */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        .nav-item.active {
+            background-color: #eff6ff;
+            color: #2563eb;
+            border-bottom: 2px solid #2563eb;
+        }
+
+        .step-card {
+            transition: all 0.3s ease;
+        }
+        .step-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+
+    <!-- 
+    Placeholder Comments Required by Instructions:
+    
+    <!-- Chosen Palette: Cyber Safe (Warm Slate Neutrals with Blue/Red/Green functional indicators) -->
+    
+    <!-- Application Structure Plan: 
+         Designed as a "Cybersecurity Command Center" dashboard. 
+         1. Header: Quick status context.
+         2. Navigation: Tabs separating the workflow into 3 logical phases: Detection (Diagnosis), Removal (Action), Prevention (Future).
+         3. Home/Dashboard: Overview & Quick Assessment Quiz to engage user immediately.
+         4. Phase 1 (Detection): Interactive chart comparing 'Normal' vs 'Infected' system resources to teach visual identification, plus a symptom checklist.
+         5. Phase 2 (Removal): A step-by-step interactive workflow (Accordion/Cards) guiding the user through the cleaning process without overwhelming them.
+         6. Phase 3 (Prevention): A 'Shield Builder' checklist that updates a security score visually.
+         Rationale: Cybersecurity can be scary. A structured, dashboard-like approach gives the user a sense of control and order.
+    -->
+    
+    <!-- Visualization & Content Choices:
+         1. Resource Monitor (Line Chart): 
+            - Goal: Inform/Compare. 
+            - Method: Chart.js Line chart toggling between normal/infected data.
+            - Justification: Shows users exactly what to look for in their Task Manager (CPU/RAM spikes).
+         2. Threat Types (Doughnut Chart):
+            - Goal: Inform.
+            - Method: Chart.js Doughnut.
+            - Justification: Visualizes the distribution of common malware types to categorize threats.
+         3. Security Score (Interactive UI):
+            - Goal: Change/Engage.
+            - Method: JS + HTML Progress bar.
+            - Justification: Gamifies prevention steps (updates, 2FA) to encourage adoption.
+         4. Process Flow (Styled HTML):
+            - Goal: Organize.
+            - Method: Vertical timeline with Tailwind.
+            - Justification: Clearly delineates the order of operations for removal.
+    -->
+    
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    -->
+
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-cyber-primary text-white rounded-lg flex items-center justify-center text-2xl font-bold">🛡️</div>
+                <div>
+                    <h1 class="text-xl font-bold text-cyber-text">مركز الحماية الرقمي</h1>
+                    <p class="text-xs text-cyber-secondary">دليلك التفاعلي لكشف وإزالة البرمجيات الخبيثة</p>
+                </div>
+            </div>
+            <div class="hidden md:block text-sm font-medium px-3 py-1 bg-green-50 text-green-700 rounded-full border border-green-200">
+                الحالة: النظام نشط
+            </div>
+        </div>
+        <!-- Navigation -->
+        <nav class="bg-white border-t border-slate-100">
+            <div class="container mx-auto px-4">
+                <div class="flex overflow-x-auto gap-6 text-sm font-medium">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item active px-3 py-3 whitespace-nowrap border-b-2 border-transparent hover:text-cyber-primary transition-colors">
+                        📊 نظرة عامة
+                    </button>
+                    <button onclick="switchTab('detection')" id="nav-detection" class="nav-item px-3 py-3 whitespace-nowrap border-b-2 border-transparent hover:text-cyber-primary transition-colors">
+                        🔍 1. الاكتشاف (الأعراض)
+                    </button>
+                    <button onclick="switchTab('removal')" id="nav-removal" class="nav-item px-3 py-3 whitespace-nowrap border-b-2 border-transparent hover:text-cyber-primary transition-colors">
+                        🧹 2. الإزالة (التنظيف)
+                    </button>
+                    <button onclick="switchTab('prevention')" id="nav-prevention" class="nav-item px-3 py-3 whitespace-nowrap border-b-2 border-transparent hover:text-cyber-primary transition-colors">
+                        🛡️ 3. الوقاية (الحصن)
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow container mx-auto px-4 py-8 space-y-8">
+
+        <!-- DASHBOARD SECTION -->
+        <section id="dashboard-section" class="space-y-8 animate-fade-in">
+            <!-- Intro Card -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+                <div class="max-w-3xl">
+                    <h2 class="text-2xl font-bold mb-4 text-cyber-text">كيف تتعامل مع التهديدات الرقمية؟</h2>
+                    <p class="text-slate-600 leading-relaxed mb-6">
+                        البرمجيات الخبيثة (Malware) هي برامج مصممة لإلحاق الضرر بجهازك أو سرقة بياناتك. 
+                        صُمم هذا التطبيق لمساعدتك على فهم دورة حياة التعامل مع التهديد: بدءاً من ملاحظة الأعراض، 
+                        مروراً بخطوات الإزالة الآمنة، وانتهاءً ببناء جدار حماية للمستقبل.
+                    </p>
+                    <button onclick="switchTab('detection')" class="bg-cyber-primary hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-lg shadow-blue-500/20">
+                        ابدأ الفحص الآن 
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Stats/Info Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Stat 1 -->
+                <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="p-3 bg-red-50 rounded-lg text-2xl">🚨</div>
+                        <span class="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">معلومة</span>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">أنواع التهديدات</h3>
+                    <p class="text-sm text-slate-500 mb-4">تتنوع البرمجيات الخبيثة بين الفيروسات، برامج الفدية، برامج التجسس، والآدوير المزعج.</p>
+                    <!-- Chart Container -->
+                    <div class="chart-container" style="height: 150px; max-height: 150px;">
+                        <canvas id="threatTypeChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Stat 2 -->
+                <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm col-span-1 lg:col-span-2">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="p-3 bg-blue-50 rounded-lg text-2xl">⚡</div>
+                        <h3 class="font-bold text-lg self-center">مؤشرات الخطر السريع</h3>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                            <span class="block text-2xl mb-1">📉</span>
+                            <span class="font-bold block">بطء مفاجئ</span>
+                            <span class="text-xs text-slate-500">الجهاز يستغرق وقتاً طويلاً للاستجابة</span>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                            <span class="block text-2xl mb-1">📢</span>
+                            <span class="font-bold block">نوافذ منبثقة</span>
+                            <span class="text-xs text-slate-500">إعلانات تظهر حتى بدون فتح المتصفح</span>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                            <span class="block text-2xl mb-1">🔋</span>
+                            <span class="font-bold block">استنزاف البطارية</span>
+                            <span class="text-xs text-slate-500">نفاد الشحن بسرعة غير معتادة</span>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                            <span class="block text-2xl mb-1">🧩</span>
+                            <span class="font-bold block">تطبيقات غريبة</span>
+                            <span class="text-xs text-slate-500">ظهور أيقونات لبرامج لم تقم بتثبيتها</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DETECTION SECTION -->
+        <section id="detection-section" class="hidden space-y-8 animate-fade-in">
+            <div class="bg-blue-50 border-r-4 border-cyber-primary p-4 rounded-lg">
+                <h3 class="font-bold text-cyber-primary mb-1">مرحلة الاكتشاف (Diagnosis)</h3>
+                <p class="text-sm text-cyber-secondary">الخطوة الأولى هي التأكد من وجود إصابة. استخدم الأدوات أدناه لتحليل سلوك جهازك ومقارنته بالسلوك الطبيعي.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Resource Monitor Simulator -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-lg">محاكي مراقب الموارد (Task Manager)</h3>
+                        <div class="flex gap-2 bg-slate-100 p-1 rounded-lg">
+                            <button onclick="updateResourceChart('normal')" id="btn-normal" class="px-3 py-1 text-xs font-medium bg-white shadow-sm rounded-md text-green-600 transition-all">سلوك طبيعي</button>
+                            <button onclick="updateResourceChart('infected')" id="btn-infected" class="px-3 py-1 text-xs font-medium text-slate-500 hover:text-red-600 transition-all">سلوك مصاب</button>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-500 mb-4">
+                        البرمجيات الخبيثة غالباً ما تستهلك موارد المعالج (CPU) والذاكرة (RAM) في الخلفية. لاحظ الفرق في الرسم البياني أدناه.
+                    </p>
+                    
+                    <!-- Chart Container -->
+                    <div class="chart-container">
+                        <canvas id="resourceChart"></canvas>
+                    </div>
+                    
+                    <div class="mt-4 p-4 bg-slate-50 rounded-lg text-sm border border-slate-100">
+                        <strong class="block mb-2 text-cyber-text">كيف تتحقق بنفسك؟</strong>
+                        <ul class="list-disc list-inside space-y-1 text-slate-600">
+                            <li>في Windows: اضغط <code>Ctrl + Shift + Esc</code> لفتح مدير المهام.</li>
+                            <li>في Mac: ابحث عن <code>Activity Monitor</code>.</li>
+                            <li>في Android/iOS: تحقق من إعدادات البطارية لرؤية التطبيقات الأكثر استهلاكاً.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Interactive Symptom Checker -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+                    <h3 class="font-bold text-lg mb-4">فاحص الأعراض التفاعلي</h3>
+                    <p class="text-sm text-slate-500 mb-6">حدد الأعراض التي تواجهها حالياً للحصول على توصية.</p>
+                    
+                    <div class="space-y-3 flex-grow">
+                        <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                            <input type="checkbox" class="symptom-check w-5 h-5 text-cyber-primary rounded focus:ring-cyber-primary" onchange="checkSymptoms()">
+                            <span class="mr-3 text-sm font-medium">الجهاز بطيء جداً فجأة</span>
+                        </label>
+                        <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                            <input type="checkbox" class="symptom-check w-5 h-5 text-cyber-primary rounded focus:ring-cyber-primary" onchange="checkSymptoms()">
+                            <span class="mr-3 text-sm font-medium">تغير الصفحة الرئيسية للمتصفح دون إذن</span>
+                        </label>
+                        <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                            <input type="checkbox" class="symptom-check w-5 h-5 text-cyber-primary rounded focus:ring-cyber-primary" onchange="checkSymptoms()">
+                            <span class="mr-3 text-sm font-medium">تعطل برنامج مكافحة الفيروسات</span>
+                        </label>
+                        <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                            <input type="checkbox" class="symptom-check w-5 h-5 text-cyber-primary rounded focus:ring-cyber-primary" onchange="checkSymptoms()">
+                            <span class="mr-3 text-sm font-medium">ظهور ملفات غريبة أو اختفاء ملفات</span>
+                        </label>
+                        <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                            <input type="checkbox" class="symptom-check w-5 h-5 text-cyber-primary rounded focus:ring-cyber-primary" onchange="checkSymptoms()">
+                            <span class="mr-3 text-sm font-medium">مروحة الجهاز تعمل بصوت عالٍ في وضع الخمول</span>
+                        </label>
+                    </div>
+
+                    <div id="symptom-result" class="mt-6 p-4 rounded-lg bg-slate-100 text-slate-600 text-center font-medium transition-all">
+                        حدد الأعراض للتحليل...
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- REMOVAL SECTION -->
+        <section id="removal-section" class="hidden space-y-8 animate-fade-in">
+            <div class="bg-red-50 border-r-4 border-alert-red p-4 rounded-lg flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-alert-red mb-1">مرحلة الإزالة (Treatment)</h3>
+                    <p class="text-sm text-slate-700">إذا تأكدت من الإصابة، لا تفزع. اتبع الخطوات التالية بالترتيب لتنظيف جهازك.</p>
+                </div>
+                <div class="text-3xl">🧹</div>
+            </div>
+
+            <!-- Removal Workflow -->
+            <div class="relative border-r-2 border-slate-200 mr-4 space-y-12 pb-4">
+                
+                <!-- Step 1 -->
+                <div class="relative step-card">
+                    <div class="absolute -right-[25px] top-0 bg-cyber-primary text-white w-8 h-8 rounded-full flex items-center justify-center font-bold border-4 border-white shadow-sm">1</div>
+                    <div class="mr-8 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="text-lg font-bold text-cyber-text mb-2">افصل الإنترنت فوراً</h4>
+                        <p class="text-slate-600 text-sm mb-4">
+                            يمنع هذا البرمجية الخبيثة من إرسال بياناتك للسيرفرات الخارجية أو تحميل المزيد من الملفات الضارة.
+                        </p>
+                        <div class="flex gap-2 text-xs font-medium text-slate-500">
+                            <span class="bg-slate-100 px-2 py-1 rounded">Wi-Fi Off</span>
+                            <span class="bg-slate-100 px-2 py-1 rounded">Ethernet Unplugged</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="relative step-card">
+                    <div class="absolute -right-[25px] top-0 bg-white text-cyber-primary border-2 border-cyber-primary w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-sm">2</div>
+                    <div class="mr-8 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="text-lg font-bold text-cyber-text mb-2">الدخول للوضع الآمن (Safe Mode)</h4>
+                        <p class="text-slate-600 text-sm mb-4">
+                            الوضع الآمن يشغل الجهاز بالحد الأدنى من البرامج، مما يمنع البرمجيات الخبيثة من العمل تلقائياً، فيسهل حذفها.
+                        </p>
+                        
+                        <!-- Interactive Toggle for Instructions -->
+                        <div class="space-y-2">
+                            <button onclick="toggleInstructions('windows')" class="w-full text-right p-3 bg-slate-50 hover:bg-slate-100 rounded-lg text-sm font-medium flex justify-between items-center">
+                                <span>💻 تعليمات Windows</span>
+                                <span class="text-slate-400">▼</span>
+                            </button>
+                            <div id="instr-windows" class="hidden p-3 text-sm text-slate-600 bg-white border border-slate-100 rounded-lg">
+                                1. أعد تشغيل الجهاز.<br>
+                                2. اضغط باستمرار على زر <strong>Shift</strong> أثناء الضغط على "Restart".<br>
+                                3. اختر Troubleshoot > Advanced options > Startup Settings > Restart.<br>
+                                4. اضغط 4 للدخول لـ Safe Mode.
+                            </div>
+
+                            <button onclick="toggleInstructions('mac')" class="w-full text-right p-3 bg-slate-50 hover:bg-slate-100 rounded-lg text-sm font-medium flex justify-between items-center">
+                                <span>🍎 تعليمات Mac</span>
+                                <span class="text-slate-400">▼</span>
+                            </button>
+                            <div id="instr-mac" class="hidden p-3 text-sm text-slate-600 bg-white border border-slate-100 rounded-lg">
+                                1. أعد تشغيل الجهاز.<br>
+                                2. اضغط فوراً وبشكل مستمر على زر <strong>Shift</strong>.<br>
+                                3. حرر الزر عند ظهور نافذة الدخول.<br>
+                                4. ستجد عبارة "Safe Boot" في الزاوية.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="relative step-card">
+                    <div class="absolute -right-[25px] top-0 bg-white text-cyber-primary border-2 border-cyber-primary w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-sm">3</div>
+                    <div class="mr-8 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="text-lg font-bold text-cyber-text mb-2">الحذف اليدوي والفحص الشامل</h4>
+                        <p class="text-slate-600 text-sm mb-4">
+                            قم بحذف الملفات المؤقتة أولاً، ثم شغل فحص الفيروسات، وأخيراً تحقق من البرامج المثبتة.
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+                            <div class="p-3 bg-orange-50 rounded border border-orange-100">
+                                <span class="block text-xl">🗑️</span>
+                                <span class="text-xs font-bold text-orange-800">حذف Temp Files</span>
+                            </div>
+                            <div class="p-3 bg-blue-50 rounded border border-blue-100">
+                                <span class="block text-xl">🔍</span>
+                                <span class="text-xs font-bold text-blue-800">فحص Antivirus</span>
+                            </div>
+                            <div class="p-3 bg-red-50 rounded border border-red-100">
+                                <span class="block text-xl">⚠️</span>
+                                <span class="text-xs font-bold text-red-800">حذف البرامج الغريبة</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 4 -->
+                <div class="relative step-card">
+                    <div class="absolute -right-[25px] top-0 bg-white text-cyber-primary border-2 border-cyber-primary w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-sm">4</div>
+                    <div class="mr-8 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="text-lg font-bold text-cyber-text mb-2">الحل الأخير: إعادة ضبط المصنع</h4>
+                        <p class="text-slate-600 text-sm">
+                            إذا فشلت الخطوات السابقة، فإن إعادة ضبط المصنع (Factory Reset) هي الحل الجذري. تذكر أن هذا سيمسح جميع بياناتك، لذا نأمل أن يكون لديك نسخة احتياطية (Backup).
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- PREVENTION SECTION -->
+        <section id="prevention-section" class="hidden space-y-8 animate-fade-in">
+            <div class="bg-green-50 border-r-4 border-safe-green p-4 rounded-lg">
+                <h3 class="font-bold text-safe-green mb-1">مرحلة الوقاية (Immunity)</h3>
+                <p class="text-sm text-green-800">الوقاية خير من العلاج. قم بتنفيذ الإجراءات التالية لرفع مستوى "المناعة الرقمية" لديك.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Checklist -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-lg mb-6">قائمة تحصين الجهاز</h3>
+                    <div class="space-y-4">
+                        <label class="flex items-start p-4 bg-slate-50 rounded-lg cursor-pointer hover:bg-white border border-transparent hover:border-slate-200 transition-all">
+                            <input type="checkbox" class="prevent-check w-5 h-5 text-safe-green mt-1 ml-4 rounded focus:ring-safe-green" onchange="updateSecurityScore()">
+                            <div>
+                                <span class="font-bold block text-cyber-text">تحديث النظام والبرامج دورياً</span>
+                                <span class="text-sm text-slate-500">التحديثات تغلق الثغرات الأمنية التي يستغلها المخترقون.</span>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start p-4 bg-slate-50 rounded-lg cursor-pointer hover:bg-white border border-transparent hover:border-slate-200 transition-all">
+                            <input type="checkbox" class="prevent-check w-5 h-5 text-safe-green mt-1 ml-4 rounded focus:ring-safe-green" onchange="updateSecurityScore()">
+                            <div>
+                                <span class="font-bold block text-cyber-text">استخدام برنامج حماية موثوق</span>
+                                <span class="text-sm text-slate-500">لا تعتمد فقط على الحماية الافتراضية، وقم بتحديث قاعدة البيانات.</span>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start p-4 bg-slate-50 rounded-lg cursor-pointer hover:bg-white border border-transparent hover:border-slate-200 transition-all">
+                            <input type="checkbox" class="prevent-check w-5 h-5 text-safe-green mt-1 ml-4 rounded focus:ring-safe-green" onchange="updateSecurityScore()">
+                            <div>
+                                <span class="font-bold block text-cyber-text">النسخ الاحتياطي (Backups)</span>
+                                <span class="text-sm text-slate-500">قاعدة الـ 3-2-1: 3 نسخ، وسيطين مختلفين، ونسخة واحدة خارج الموقع (سحابية).</span>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start p-4 bg-slate-50 rounded-lg cursor-pointer hover:bg-white border border-transparent hover:border-slate-200 transition-all">
+                            <input type="checkbox" class="prevent-check w-5 h-5 text-safe-green mt-1 ml-4 rounded focus:ring-safe-green" onchange="updateSecurityScore()">
+                            <div>
+                                <span class="font-bold block text-cyber-text">تفعيل المصادقة الثنائية (2FA)</span>
+                                <span class="text-sm text-slate-500">طبقة حماية إضافية تمنع الدخول حتى لو سُرقت كلمة المرور.</span>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start p-4 bg-slate-50 rounded-lg cursor-pointer hover:bg-white border border-transparent hover:border-slate-200 transition-all">
+                            <input type="checkbox" class="prevent-check w-5 h-5 text-safe-green mt-1 ml-4 rounded focus:ring-safe-green" onchange="updateSecurityScore()">
+                            <div>
+                                <span class="font-bold block text-cyber-text">الحذر من الروابط والمرفقات</span>
+                                <span class="text-sm text-slate-500">لا تفتح أي رابط أو مرفق من مصدر مجهول، وتأكد من عنوان المرسل.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Score Card -->
+                <div class="lg:col-span-1">
+                    <div class="bg-cyber-text text-white p-8 rounded-2xl shadow-lg text-center sticky top-24">
+                        <h4 class="text-lg font-medium opacity-80 mb-4">مستوى أمانك الحالي</h4>
+                        <div class="relative w-32 h-32 mx-auto mb-6 flex items-center justify-center">
+                            <svg class="w-full h-full transform -rotate-90">
+                                <circle cx="64" cy="64" r="56" stroke="currentColor" stroke-width="8" fill="transparent" class="text-slate-700" />
+                                <circle id="score-circle" cx="64" cy="64" r="56" stroke="#10b981" stroke-width="8" fill="transparent" stroke-dasharray="351" stroke-dashoffset="351" class="transition-all duration-1000 ease-out" />
+                            </svg>
+                            <span id="score-text" class="absolute text-4xl font-bold">0%</span>
+                        </div>
+                        <p id="score-msg" class="text-sm text-slate-300">أكمل القائمة لرفع مستوى حمايتك.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-100 py-6 border-t border-slate-200 mt-8">
+        <div class="container mx-auto px-4 text-center text-slate-500 text-sm">
+            <p>تم تصميم هذا الدليل التفاعلي للتوعية الأمنية. في حال الإصابات المعقدة، يُنصح باستشارة مختص.</p>
+        </div>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        // --- Navigation Logic ---
+        function switchTab(tabId) {
+            // Hide all sections
+            ['dashboard', 'detection', 'removal', 'prevention'].forEach(id => {
+                document.getElementById(`${id}-section`).classList.add('hidden');
+                document.getElementById(`nav-${id}`).classList.remove('active', 'border-b-2', 'border-cyber-primary', 'text-cyber-primary', 'bg-blue-50');
+            });
+
+            // Show selected section
+            document.getElementById(`${tabId}-section`).classList.remove('hidden');
+            const navBtn = document.getElementById(`nav-${tabId}`);
+            navBtn.classList.add('active', 'border-b-2', 'border-cyber-primary', 'text-cyber-primary', 'bg-blue-50');
+
+            // Trigger animations or chart redraws if necessary
+            if (tabId === 'detection' && resourceChart) {
+                resourceChart.update();
+            }
+        }
+
+        // --- Resource Monitor Chart (Detection) ---
+        const ctxResource = document.getElementById('resourceChart').getContext('2d');
+        const labels = ['00:00', '00:05', '00:10', '00:15', '00:20', '00:25', '00:30', '00:35'];
+        
+        // Data presets
+        const dataNormal = [15, 18, 12, 20, 15, 12, 16, 14]; // Low usage
+        const dataInfected = [15, 45, 88, 92, 75, 95, 90, 98]; // Spikes
+
+        const resourceChart = new Chart(ctxResource, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'استهلاك المعالج (CPU %)',
+                    data: dataNormal,
+                    borderColor: '#10b981', // Safe Green
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: { display: true, text: 'الاستهلاك %' }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        rtl: true,
+                        titleAlign: 'right',
+                        bodyAlign: 'right'
+                    }
+                }
+            }
+        });
+
+        function updateResourceChart(state) {
+            const btnNormal = document.getElementById('btn-normal');
+            const btnInfected = document.getElementById('btn-infected');
+
+            if (state === 'normal') {
+                resourceChart.data.datasets[0].data = dataNormal;
+                resourceChart.data.datasets[0].borderColor = '#10b981';
+                resourceChart.data.datasets[0].backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                
+                btnNormal.classList.remove('text-slate-500');
+                btnNormal.classList.add('bg-white', 'shadow-sm', 'text-green-600');
+                btnInfected.classList.add('text-slate-500');
+                btnInfected.classList.remove('bg-white', 'shadow-sm', 'text-red-600');
+            } else {
+                resourceChart.data.datasets[0].data = dataInfected;
+                resourceChart.data.datasets[0].borderColor = '#ef4444'; // Alert Red
+                resourceChart.data.datasets[0].backgroundColor = 'rgba(239, 68, 68, 0.1)';
+
+                btnInfected.classList.remove('text-slate-500');
+                btnInfected.classList.add('bg-white', 'shadow-sm', 'text-red-600');
+                btnNormal.classList.add('text-slate-500');
+                btnNormal.classList.remove('bg-white', 'shadow-sm', 'text-green-600');
+            }
+            resourceChart.update();
+        }
+
+        // --- Threat Types Chart (Dashboard) ---
+        const ctxThreat = document.getElementById('threatTypeChart').getContext('2d');
+        new Chart(ctxThreat, {
+            type: 'doughnut',
+            data: {
+                labels: ['Trojans (أحصنة طروادة)', 'Adware (إعلانات)', 'Ransomware (فدية)', 'Spyware (تجسس)'],
+                datasets: [{
+                    data: [40, 30, 15, 15],
+                    backgroundColor: ['#ef4444', '#f59e0b', '#000000', '#2563eb'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { boxWidth: 10, font: { family: 'Tajawal', size: 10 } }
+                    },
+                    tooltip: { rtl: true }
+                }
+            }
+        });
+
+        // --- Symptom Checker Logic ---
+        function checkSymptoms() {
+            const checks = document.querySelectorAll('.symptom-check');
+            let count = 0;
+            checks.forEach(check => { if(check.checked) count++; });
+
+            const resultBox = document.getElementById('symptom-result');
+            
+            if (count === 0) {
+                resultBox.className = "mt-6 p-4 rounded-lg bg-slate-100 text-slate-600 text-center font-medium transition-all";
+                resultBox.innerHTML = "حدد الأعراض للتحليل...";
+            } else if (count < 2) {
+                resultBox.className = "mt-6 p-4 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800 text-center font-medium transition-all";
+                resultBox.innerHTML = "⚠️ احتمالية منخفضة. قد يكون مجرد خطأ في النظام. قم بإعادة التشغيل وراقب الجهاز.";
+            } else {
+                resultBox.className = "mt-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800 text-center font-bold transition-all shadow-sm";
+                resultBox.innerHTML = `🚨 خطر! لديك ${count} أعراض تشير إلى احتمالية عالية للإصابة. انتقل لقسم "الإزالة" فوراً.`;
+            }
+        }
+
+        // --- Removal Instructions Toggle ---
+        function toggleInstructions(os) {
+            const el = document.getElementById(`instr-${os}`);
+            el.classList.toggle('hidden');
+        }
+
+        // --- Security Score Logic ---
+        function updateSecurityScore() {
+            const checks = document.querySelectorAll('.prevent-check');
+            const total = checks.length;
+            let checked = 0;
+            checks.forEach(check => { if(check.checked) checked++; });
+
+            const percentage = Math.round((checked / total) * 100);
+            const circle = document.getElementById('score-circle');
+            const text = document.getElementById('score-text');
+            const msg = document.getElementById('score-msg');
+
+            // Update Circle Dashoffset (351 is circumference of r=56)
+            const offset = 351 - (351 * percentage) / 100;
+            circle.style.strokeDashoffset = offset;
+            
+            // Color Logic
+            if(percentage < 40) {
+                circle.style.stroke = "#ef4444"; // Red
+                msg.textContent = "جهازك في خطر!";
+            } else if (percentage < 80) {
+                circle.style.stroke = "#f59e0b"; // Orange
+                msg.textContent = "جيد، لكن يمكن التحسين.";
+            } else {
+                circle.style.stroke = "#10b981"; // Green
+                msg.textContent = "ممتاز! جهازك محصن.";
+            }
+
+            text.textContent = `${percentage}%`;
+        }
+    </script>
+</body>
+</html>
